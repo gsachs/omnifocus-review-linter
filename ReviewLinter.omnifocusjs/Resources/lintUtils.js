@@ -26,12 +26,15 @@
         triageTagName:          "Needs Triage"
     };
 
-    // ─── Preferences helpers ──────────────────────────────────────────────────
+    // ─── Preferences ─────────────────────────────────────────────────────────
+    // Preferences must be constructed at load time, not inside action handlers.
+
+    lib.prefs = new Preferences();
 
     lib.readPref = function(prefs, key, defaultValue) {
         const fallback = (defaultValue !== undefined) ? defaultValue : lib.DEFAULTS[key];
         if (!prefs) return fallback;
-        const val = prefs[key];
+        const val = prefs.read(key);
         return (val === null || val === undefined) ? fallback : val;
     };
 
