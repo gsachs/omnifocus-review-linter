@@ -1,6 +1,6 @@
 {
     "defaultLocale": "en",
-    "identifier": "com.omnifocus.review-linter",
+    "identifier": "com.gsachs.review-linter",
     "version": "1.0",
     "author": "Review Linter Contributors",
     "description": "Audits OmniFocus projects and tasks for GTD hygiene issues.",

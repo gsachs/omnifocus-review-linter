@@ -1,7 +1,7 @@
 /*{
     "type": "library",
     "targets": ["omnifocus"],
-    "identifier": "com.omnifocus.review-linter.lintUtils",
+    "identifier": "com.gsachs.review-linter.lintUtils",
     "version": "1.0"
 }*/
 (() => {

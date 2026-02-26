@@ -2,7 +2,7 @@
     "type": "action",
     "targets": ["omnifocus"],
     "author": "Review Linter Contributors",
-    "identifier": "com.omnifocus.review-linter.configure",
+    "identifier": "com.gsachs.review-linter.configure",
     "version": "1.0",
     "description": "Set preferences for the Review Linter plugin.",
     "label": "Configure Review Linter",

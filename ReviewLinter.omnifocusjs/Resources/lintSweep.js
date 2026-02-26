@@ -2,7 +2,7 @@
     "type": "action",
     "targets": ["omnifocus"],
     "author": "Review Linter Contributors",
-    "identifier": "com.omnifocus.review-linter.lintSweep",
+    "identifier": "com.gsachs.review-linter.lintSweep",
     "version": "1.0",
     "description": "Scan active projects and tasks for lint issues.",
     "label": "Lint Sweep",

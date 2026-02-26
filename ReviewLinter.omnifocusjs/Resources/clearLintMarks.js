@@ -2,7 +2,7 @@
     "type": "action",
     "targets": ["omnifocus"],
     "author": "Review Linter Contributors",
-    "identifier": "com.omnifocus.review-linter.clearLintMarks",
+    "identifier": "com.gsachs.review-linter.clearLintMarks",
     "version": "1.0",
     "description": "Remove lint tags and optional stamps.",
     "label": "Clear Lint Marks",

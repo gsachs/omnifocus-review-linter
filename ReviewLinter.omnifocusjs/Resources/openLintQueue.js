@@ -2,7 +2,7 @@
     "type": "action",
     "targets": ["omnifocus"],
     "author": "Review Linter Contributors",
-    "identifier": "com.omnifocus.review-linter.openLintQueue",
+    "identifier": "com.gsachs.review-linter.openLintQueue",
     "version": "1.0",
     "description": "Navigate to the lint review tag.",
     "label": "Open Lint Queue",

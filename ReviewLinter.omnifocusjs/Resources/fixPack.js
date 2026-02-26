@@ -2,7 +2,7 @@
     "type": "action",
     "targets": ["omnifocus"],
     "author": "Review Linter Contributors",
-    "identifier": "com.omnifocus.review-linter.fixPack",
+    "identifier": "com.gsachs.review-linter.fixPack",
     "version": "1.0",
     "description": "Auto-remediate common lint issues.",
     "label": "Fix Pack",
