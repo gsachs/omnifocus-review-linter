@@ -237,19 +237,31 @@
         const reasons          = [];
         let skipNoNextAction   = false;
 
-        const remainingTasks = project.flattenedTasks.filter(t => lib.isRemaining(t) && t !== project.task);
+        const remainingTasks   = project.flattenedTasks.filter(t => lib.isRemaining(t) && t !== project.task);
+        const deferPastGrace   = lib.readPref(prefs, "deferPastGraceDays");
 
         // P_EMPTY
         if (remainingTasks.length === 0) {
             reasons.push("P_EMPTY");
         }
 
-        // P_HAS_OVERDUE
+        // P_HAS_OVERDUE — a subtask's due date is past
         const hasOverdue = remainingTasks.some(t => {
             const due = t.effectiveDueDate || t.dueDate;
             return due && due < now;
         });
         if (hasOverdue) reasons.push("P_HAS_OVERDUE");
+
+        // P_OVERDUE — the project's own due date is past
+        if (project.task.dueDate && project.task.dueDate < now) {
+            reasons.push("P_OVERDUE");
+        }
+
+        // P_DEFER_PAST — the project's own defer date is stale
+        if (project.task.deferDate) {
+            const daysOld = lib.daysBetween(project.task.deferDate, now);
+            if (daysOld > deferPastGrace) reasons.push("P_DEFER_PAST");
+        }
 
         // P_NO_NEXT_ACTION — skip if P_EMPTY (empty projects have no tasks to check)
         if (!reasons.includes("P_EMPTY")) {

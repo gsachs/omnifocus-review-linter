@@ -203,6 +203,31 @@
             }
         }
 
+        // ── Repair project root task dates (excluded from task loop above) ────
+
+        for (const project of projects) {
+            if (doRepairDefer && project.task.deferDate) {
+                const daysOld = lib.daysBetween(project.task.deferDate, now);
+                if (daysOld > deferPastGraceDays) {
+                    project.task.deferDate = deferPolicy === "today" ? lib.startOfToday() : null;
+                    deferRepaired++;
+                }
+            }
+
+            if (doRepairDue && project.task.dueDate && project.task.dueDate < now) {
+                if (duePolicy === "today") {
+                    project.task.dueDate = lib.startOfToday();
+                } else if (duePolicy === "next_week") {
+                    const d = lib.startOfToday();
+                    d.setDate(d.getDate() + 7);
+                    project.task.dueDate = d;
+                } else {
+                    project.task.dueDate = null;
+                }
+                dueRepaired++;
+            }
+        }
+
         // ── Summary ───────────────────────────────────────────────────────────
 
         const s = n => n !== 1 ? "s" : "";

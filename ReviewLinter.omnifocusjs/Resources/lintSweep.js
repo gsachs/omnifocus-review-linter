@@ -55,6 +55,8 @@
                 flagged:             0,
                 P_NO_NEXT_ACTION:    0,
                 P_HAS_OVERDUE:       0,
+                P_OVERDUE:           0,
+                P_DEFER_PAST:        0,
                 P_EMPTY:             0,
                 skippedNoNextAction: 0
             };
@@ -134,9 +136,11 @@
             let msg = "";
 
             msg += "Projects flagged: " + projectCounts.flagged + "\n";
-            if (projectCounts.P_NO_NEXT_ACTION)  msg += "  · No Next Action: "      + projectCounts.P_NO_NEXT_ACTION  + "\n";
-            if (projectCounts.P_HAS_OVERDUE)     msg += "  · Has Overdue Tasks: "   + projectCounts.P_HAS_OVERDUE     + "\n";
-            if (projectCounts.P_EMPTY)           msg += "  · Empty: "               + projectCounts.P_EMPTY           + "\n";
+            if (projectCounts.P_NO_NEXT_ACTION)  msg += "  · No Next Action: "          + projectCounts.P_NO_NEXT_ACTION  + "\n";
+            if (projectCounts.P_HAS_OVERDUE)     msg += "  · Has Overdue Tasks: "       + projectCounts.P_HAS_OVERDUE     + "\n";
+            if (projectCounts.P_OVERDUE)         msg += "  · Project Overdue: "         + projectCounts.P_OVERDUE         + "\n";
+            if (projectCounts.P_DEFER_PAST)      msg += "  · Project Defer Past: "      + projectCounts.P_DEFER_PAST      + "\n";
+            if (projectCounts.P_EMPTY)           msg += "  · Empty: "                   + projectCounts.P_EMPTY           + "\n";
             if (projectCounts.skippedNoNextAction > 0) {
                 msg += "  · (P_NO_NEXT_ACTION check skipped for " + projectCounts.skippedNoNextAction + " — taskStatus unavailable)\n";
             }
