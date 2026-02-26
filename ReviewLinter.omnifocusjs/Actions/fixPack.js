@@ -72,9 +72,7 @@
         const deferPolicy    = toggleResult.values["deferPolicy"];
 
         if (!doAddWaiting && !doResetWaiting && !doTriage && !doRepairDefer) {
-            const noop = new Alert("Fix Pack", "No fixes selected. Nothing to do.");
-            noop.addOption("OK");
-            await noop.show();
+            await lib.showAlert("Fix Pack", "No fixes selected. Nothing to do.");
             return;
         }
 
@@ -84,16 +82,30 @@
         if (doTriage) {
             triageTag = lib.findOrCreateTag(triageTagName);
             if (!triageTag) {
-                const alert = new Alert(
+                await lib.showAlert(
                     "Cannot Create Triage Tag",
                     `The tag "${triageTagName}" could not be found or created. ` +
                     "Please create it manually in OmniFocus and re-run Fix Pack."
                 );
-                alert.addOption("OK");
-                await alert.show();
                 return;
             }
         }
+
+        // ── Scope resolution ──────────────────────────────────────────────────
+
+        const projects = lib.resolveProjects(prefs);
+        if (projects === null) {
+            const scopeMode = lib.readPref(prefs, "scopeMode");
+            const label = scopeMode === "FOLDER_SCOPE" ? "folder" : "tag";
+            await lib.showAlert(
+                "Scope Not Found",
+                `The configured ${label} no longer exists. ` +
+                "Please run Configure Review Linter to update your scope setting."
+            );
+            return;
+        }
+
+        const allTasks = lib.resolveTasksForLint(prefs, projects);
 
         // ── Counters ──────────────────────────────────────────────────────────
 
@@ -101,10 +113,6 @@
         let waitingReset   = 0;
         let inboxTriaged   = 0;
         let deferRepaired  = 0;
-
-        const allTasks = Array.from(flattenedTasks).filter(
-            t => !t.completed && !t.dropped
-        );
 
         for (const task of allTasks) {
             // ── Add @waitingSince to waiting tasks that lack it ───────────────
@@ -176,9 +184,7 @@
         if (deferRepaired > 0) parts.push(deferRepaired + " defer date" + (deferRepaired !== 1 ? "s" : "") + " repaired (" + deferPolicy + ").");
 
         const msg = parts.length > 0 ? parts.join("\n") : "No changes made.";
-        const done = new Alert("Fix Pack Complete", msg);
-        done.addOption("Done");
-        await done.show();
+        await lib.showAlert("Fix Pack Complete", msg, "Done");
     });
 
     action.validate = function(selection, sender) {

@@ -16,21 +16,7 @@
         const prefs   = this.plugIn.preferences;
         const tagName = lib.readPref(prefs, "reviewTagName");
 
-        const encodedTag = encodeURIComponent(tagName);
-        const urlString  = "omnifocus:///tag/" + encodedTag;
-        const url        = URL.fromString(urlString);
-
-        if (url) {
-            app.openURL(url);
-        } else {
-            const alert = new Alert(
-                "Open Lint Queue",
-                'Could not build a navigation URL. ' +
-                'Please filter by the tag "' + tagName + '" in OmniFocus manually.'
-            );
-            alert.addOption("OK");
-            await alert.show();
-        }
+        await lib.navigateToTag(tagName);
     });
 
     action.validate = function(selection, sender) {

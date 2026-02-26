@@ -72,7 +72,13 @@
         ));
 
         mainForm.validate = function(f) {
-            return (f.values["reviewTagName"] || "").trim().length > 0;
+            if ((f.values["reviewTagName"] || "").trim().length === 0) return false;
+            const numFields = ["inboxMaxAgeDays", "deferPastGraceDays", "waitingStaleDays"];
+            for (const key of numFields) {
+                const val = parseInt(f.values[key], 10);
+                if (Number.isNaN(val) || val < 0) return false;
+            }
+            return true;
         };
 
         let mainResult;
@@ -94,11 +100,11 @@
                 f => f.status === Folder.Status.Active
             );
             if (allFolders.length === 0) {
-                const err = new Alert("No Folders Found",
+                await lib.showAlert(
+                    "No Folders Found",
                     "There are no active folders in your database. " +
-                    "Scope mode reverted to All Active Projects.");
-                err.addOption("OK");
-                await err.show();
+                    "Scope mode reverted to All Active Projects."
+                );
                 mainResult.values["scopeMode"] = "ALL_ACTIVE_PROJECTS";
             } else {
                 const folderIds   = allFolders.map(f => f.id.primaryKey);
@@ -121,11 +127,11 @@
         } else if (newScopeMode === "TAG_SCOPE") {
             const allTags = Array.from(flattenedTags);
             if (allTags.length === 0) {
-                const err = new Alert("No Tags Found",
+                await lib.showAlert(
+                    "No Tags Found",
                     "There are no tags in your database. " +
-                    "Scope mode reverted to All Active Projects.");
-                err.addOption("OK");
-                await err.show();
+                    "Scope mode reverted to All Active Projects."
+                );
                 mainResult.values["scopeMode"] = "ALL_ACTIVE_PROJECTS";
             } else {
                 const tagIds   = allTags.map(t => t.id.primaryKey);
@@ -156,17 +162,18 @@
         prefs["excludeTagNames"]        = (mainResult.values["excludeTagNames"] || "").trim();
         prefs["includeOnHoldProjects"]  = mainResult.values["includeOnHoldProjects"];
         prefs["lintTasksEnabled"]       = mainResult.values["lintTasksEnabled"];
-        prefs["inboxMaxAgeDays"]        = parseInt(mainResult.values["inboxMaxAgeDays"]) || 2;
-        prefs["deferPastGraceDays"]     = parseInt(mainResult.values["deferPastGraceDays"]) || 7;
+        const parsedInbox = parseInt(mainResult.values["inboxMaxAgeDays"], 10);
+        prefs["inboxMaxAgeDays"]        = Number.isNaN(parsedInbox) ? 2 : parsedInbox;
+        const parsedDefer = parseInt(mainResult.values["deferPastGraceDays"], 10);
+        prefs["deferPastGraceDays"]     = Number.isNaN(parsedDefer) ? 7 : parsedDefer;
         prefs["waitingTagName"]         = (mainResult.values["waitingTagName"] || "").trim();
-        prefs["waitingStaleDays"]       = parseInt(mainResult.values["waitingStaleDays"]) || 21;
+        const parsedStale = parseInt(mainResult.values["waitingStaleDays"], 10);
+        prefs["waitingStaleDays"]       = Number.isNaN(parsedStale) ? 21 : parsedStale;
         prefs["enableWaitingSinceStamp"] = mainResult.values["enableWaitingSinceStamp"];
         prefs["triageTagName"]          = (mainResult.values["triageTagName"] || "").trim();
         prefs["pluginVersion"]          = "1.0";
 
-        const done = new Alert("Preferences Saved", "Review Linter settings updated.");
-        done.addOption("OK");
-        await done.show();
+        await lib.showAlert("Preferences Saved", "Review Linter settings updated.");
     });
 
     action.validate = function(selection, sender) {

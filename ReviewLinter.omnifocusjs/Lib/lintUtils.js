@@ -76,7 +76,7 @@
      */
     lib.upsertStamp = function(note, regex, newStamp) {
         if (regex.test(note)) {
-            return note.replace(regex, newStamp);
+            return note.replace(regex, function() { return newStamp; });
         }
         if (note.length === 0) return newStamp;
         const sep = note.endsWith("\n") ? "" : "\n";
@@ -95,23 +95,6 @@
     };
 
     /**
-     * Extract the full stamp token if present, else null.
-     */
-    lib.readStamp = function(note, regex) {
-        const match = note.match(regex);
-        return match ? match[0] : null;
-    };
-
-    /**
-     * Parse @lint(A,B,C) → ["A","B","C"]. Returns [] if no stamp.
-     */
-    lib.readLintReasons = function(note) {
-        const match = note.match(/@lint\(([A-Z_,]+)\)/);
-        if (!match) return [];
-        return match[1].split(",").filter(s => s.length > 0);
-    };
-
-    /**
      * Parse @waitingSince(YYYY-MM-DD) → Date or null.
      */
     lib.readWaitingSince = function(note) {
@@ -121,6 +104,10 @@
     };
 
     // ─── Scope helpers ────────────────────────────────────────────────────────
+
+    lib.isRemaining = function(task) {
+        return !task.completed && !task.dropped;
+    };
 
     lib.parseExcludeTags = function(csv) {
         if (!csv) return [];
@@ -194,13 +181,13 @@
         // Tasks within in-scope projects (remaining only)
         for (const proj of projects) {
             proj.flattenedTasks.forEach(t => {
-                if (!t.completed && !t.dropped) add(t);
+                if (lib.isRemaining(t)) add(t);
             });
         }
 
         // Inbox tasks (always included regardless of scope mode)
         inbox.forEach(t => {
-            if (!t.completed && !t.dropped) add(t);
+            if (lib.isRemaining(t)) add(t);
         });
 
         return result;
@@ -221,14 +208,6 @@
         } catch (e) {
             return null;
         }
-    };
-
-    /**
-     * Ensures the review tag exists. Returns it, or null on failure.
-     */
-    lib.ensureReviewTag = function(prefs) {
-        const name = lib.readPref(prefs, "reviewTagName");
-        return lib.findOrCreateTag(name);
     };
 
     // ─── Reason aggregation ───────────────────────────────────────────────────
@@ -252,14 +231,11 @@
      * Compute project-level reason codes.
      * Returns { reasons: string[], skipNoNextAction: boolean }
      */
-    lib.computeProjectReasons = function(project, prefs) {
+    lib.computeProjectReasons = function(project, prefs, now) {
         const reasons          = [];
         let skipNoNextAction   = false;
-        const now              = new Date();
 
-        const remainingTasks = project.flattenedTasks.filter(
-            t => !t.completed && !t.dropped
-        );
+        const remainingTasks = project.flattenedTasks.filter(lib.isRemaining);
 
         // P_EMPTY
         if (remainingTasks.length === 0) {
@@ -275,13 +251,12 @@
 
         // P_NO_NEXT_ACTION — skip if P_EMPTY (empty projects have no tasks to check)
         if (!reasons.includes("P_EMPTY")) {
-            const availabilities = remainingTasks.map(t => lib.isTaskAvailableIsh(t));
-            if (availabilities[0] === undefined) {
+            const probe = lib.isTaskAvailableIsh(remainingTasks[0]);
+            if (probe === undefined) {
                 // taskStatus not available on this build — skip silently
                 skipNoNextAction = true;
-            } else {
-                const hasAvailable = availabilities.some(a => a === true);
-                if (!hasAvailable) reasons.push("P_NO_NEXT_ACTION");
+            } else if (!remainingTasks.some(t => lib.isTaskAvailableIsh(t))) {
+                reasons.push("P_NO_NEXT_ACTION");
             }
         }
 
@@ -292,10 +267,9 @@
      * Compute task-level reason codes.
      * Returns { reasons: string[], skippedInboxAge: boolean }
      */
-    lib.computeTaskReasons = function(task, prefs) {
+    lib.computeTaskReasons = function(task, prefs, now) {
         const reasons         = [];
         let skippedInboxAge   = false;
-        const now             = new Date();
 
         const deferPastGrace  = lib.readPref(prefs, "deferPastGraceDays");
         const inboxMaxAge     = lib.readPref(prefs, "inboxMaxAgeDays");
@@ -340,6 +314,30 @@
         }
 
         return { reasons, skippedInboxAge };
+    };
+
+    // ─── UI helpers ───────────────────────────────────────────────────────────
+
+    lib.showAlert = async function(title, message, buttonLabel) {
+        const alert = new Alert(title, message);
+        alert.addOption(buttonLabel || "OK");
+        await alert.show();
+    };
+
+    lib.navigateToTag = async function(tagName) {
+        const encodedTag = encodeURIComponent(tagName);
+        const url        = URL.fromString("omnifocus:///tag/" + encodedTag);
+        if (url) {
+            app.openURL(url);
+        } else {
+            const alert = new Alert(
+                "Open Lint Queue",
+                'Could not build a navigation URL. ' +
+                'Please filter by the tag "' + tagName + '" in OmniFocus manually.'
+            );
+            alert.addOption("OK");
+            await alert.show();
+        }
     };
 
     return lib;

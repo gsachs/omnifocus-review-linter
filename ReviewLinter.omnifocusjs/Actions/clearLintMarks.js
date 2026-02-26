@@ -21,12 +21,10 @@
         const tagName   = lib.readPref(prefs, "reviewTagName");
         const reviewTag = flattenedTags.byName(tagName);
         if (!reviewTag) {
-            const alert = new Alert(
+            await lib.showAlert(
                 "Tag Not Found",
                 'The lint tag "' + tagName + '" does not exist. Nothing to clear.'
             );
-            alert.addOption("OK");
-            await alert.show();
             return;
         }
 
@@ -70,13 +68,11 @@
         } else {
             const projects = lib.resolveProjects(prefs);
             if (projects === null) {
-                const alert = new Alert(
+                await lib.showAlert(
                     "Scope Not Found",
                     "The configured scope target no longer exists. " +
                     "Please run Configure Review Linter to update your scope setting."
                 );
-                alert.addOption("OK");
-                await alert.show();
                 return;
             }
             targetProjects = projects;
@@ -132,9 +128,7 @@
         }
         if (!msg) msg = "No items with the lint tag were found in the target scope.";
 
-        const done = new Alert("Clear Lint Marks", msg);
-        done.addOption("Done");
-        await done.show();
+        await lib.showAlert("Clear Lint Marks", msg, "Done");
     });
 
     action.validate = function(selection, sender) {

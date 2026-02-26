@@ -26,28 +26,24 @@
         if (projects === null) {
             const scopeMode = lib.readPref(prefs, "scopeMode");
             const label = scopeMode === "FOLDER_SCOPE" ? "folder" : "tag";
-            const alert = new Alert(
+            await lib.showAlert(
                 "Scope Not Found",
                 `The configured ${label} no longer exists. ` +
                 "Please run Configure Review Linter to update your scope setting."
             );
-            alert.addOption("OK");
-            await alert.show();
             return;
         }
 
         // ── Ensure review tag ─────────────────────────────────────────────────
 
-        const reviewTag = lib.ensureReviewTag(prefs);
+        const reviewTag = lib.findOrCreateTag(lib.readPref(prefs, "reviewTagName"));
         if (!reviewTag) {
             const tagName = lib.readPref(prefs, "reviewTagName");
-            const alert = new Alert(
+            await lib.showAlert(
                 "Cannot Create Review Tag",
                 `The tag "${tagName}" could not be found or created. ` +
                 "Please create it manually in OmniFocus and re-run Lint Sweep."
             );
-            alert.addOption("OK");
-            await alert.show();
             return;
         }
 
@@ -72,7 +68,7 @@
         // ── Project scan ──────────────────────────────────────────────────────
 
         for (const project of projects) {
-            const { reasons, skipNoNextAction } = lib.computeProjectReasons(project, prefs);
+            const { reasons, skipNoNextAction } = lib.computeProjectReasons(project, prefs, now);
 
             if (skipNoNextAction) projectCounts.skippedNoNextAction++;
 
@@ -102,7 +98,7 @@
             for (const task of tasks) {
                 if (lib.shouldExclude(task, excludeTagNames)) continue;
 
-                const { reasons, skippedInboxAge } = lib.computeTaskReasons(task, prefs);
+                const { reasons, skippedInboxAge } = lib.computeTaskReasons(task, prefs, now);
 
                 if (skippedInboxAge) taskCounts.skippedInboxAge++;
 
@@ -128,9 +124,7 @@
         const totalIssues = projectCounts.flagged + taskCounts.flagged;
 
         if (totalIssues === 0) {
-            const alert = new Alert("Lint Sweep Complete", "No issues found. Your database looks clean!");
-            alert.addOption("Done");
-            await alert.show();
+            await lib.showAlert("Lint Sweep Complete", "No issues found. Your database looks clean!", "Done");
             return;
         }
 
@@ -166,27 +160,12 @@
         const choice = await summary.show();
 
         if (choice === 0) {
-            // Open Lint Queue inline
-            const tagName    = lib.readPref(prefs, "reviewTagName");
-            const encodedTag = encodeURIComponent(tagName);
-            const url        = URL.fromString("omnifocus:///tag/" + encodedTag);
-            if (url) {
-                app.openURL(url);
-            } else {
-                const fallback = new Alert(
-                    "Open Lint Queue",
-                    'Please filter by the tag "' + tagName + '" in OmniFocus to view lint results.'
-                );
-                fallback.addOption("OK");
-                await fallback.show();
-            }
+            await lib.navigateToTag(lib.readPref(prefs, "reviewTagName"));
         } else if (choice === 1) {
-            const notice = new Alert(
+            await lib.showAlert(
                 "Run Fix Pack",
                 'Open the Automation menu and choose "Fix Pack" to auto-remediate common issues.'
             );
-            notice.addOption("OK");
-            await notice.show();
         }
     });
 
