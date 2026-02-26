@@ -82,12 +82,11 @@ Applies conservative auto-fixes. All toggles are **off by default** — you choo
 - **Reset stale @waitingSince** — updates the stamp to today for tasks flagged as T_WAITING_TOO_LONG
 - **Triage inbox** — adds the triage tag (default: `Needs Triage`) to old inbox items
 - **Repair defer dates** — updates or clears defer dates that are stale by more than the grace period
-
-Fix Pack **never sets due dates**.
+- **Repair due dates** — sets overdue due dates to today, next week, or clears them
 
 ### 5. Configure Review Linter
 
-Opens a settings form. All settings persist across OmniFocus sessions.
+Opens a single settings form with all options in one place, including inline folder and tag pickers for scope selection. All settings persist across OmniFocus sessions.
 
 ## Preferences
 
