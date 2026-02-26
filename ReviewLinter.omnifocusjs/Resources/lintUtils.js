@@ -108,8 +108,8 @@
     // ─── Scope helpers ────────────────────────────────────────────────────────
 
     lib.isRemaining = function(task) {
-        if (task.completed) return false;
-        if (task.taskStatus === Task.Status.Dropped) return false;
+        if (task.taskStatus === Task.Status.Completed) return false;
+        if (task.taskStatus === Task.Status.Dropped)   return false;
         return true;
     };
 
