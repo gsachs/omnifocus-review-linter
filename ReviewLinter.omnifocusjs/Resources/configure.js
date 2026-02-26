@@ -14,22 +14,8 @@
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
 
-        const lib    = this.plugIn.library("lintUtils");
-        let   prefs  = this.plugIn.preferences;
-
-        // ── Ensure preferences object ─────────────────────────────────────────
-        if (!prefs) {
-            try { prefs = new PlugIn.Preferences(this.plugIn.identifier); } catch (_) {}
-        }
-        if (!prefs) {
-            await lib.showAlert(
-                "Preferences Unavailable",
-                "Could not access the plugin preferences store (this.plugIn.preferences is " +
-                (this.plugIn.preferences === null ? "null" : "undefined") + ").\n" +
-                "Try reinstalling the plugin or restarting OmniFocus."
-            );
-            return;
-        }
+        const lib   = this.plugIn.library("lintUtils");
+        const prefs = lib.loadPrefs();
 
         // ── Step 1: Main settings form ────────────────────────────────────────
 
@@ -170,24 +156,27 @@
 
         // ── Save all preferences ──────────────────────────────────────────────
 
-        prefs["reviewTagName"]          = (mainResult.values["reviewTagName"] || "").trim();
-        prefs["alsoFlag"]               = mainResult.values["alsoFlag"];
-        prefs["scopeMode"]              = mainResult.values["scopeMode"];
-        prefs["scopeFolderId"]          = newScopeFolderId;
-        prefs["scopeTagId"]             = newScopeTagId;
-        prefs["excludeTagNames"]        = (mainResult.values["excludeTagNames"] || "").trim();
-        prefs["includeOnHoldProjects"]  = mainResult.values["includeOnHoldProjects"];
-        prefs["lintTasksEnabled"]       = mainResult.values["lintTasksEnabled"];
         const parsedInbox = parseInt(mainResult.values["inboxMaxAgeDays"], 10);
-        prefs["inboxMaxAgeDays"]        = Number.isNaN(parsedInbox) ? 2 : parsedInbox;
         const parsedDefer = parseInt(mainResult.values["deferPastGraceDays"], 10);
-        prefs["deferPastGraceDays"]     = Number.isNaN(parsedDefer) ? 7 : parsedDefer;
-        prefs["waitingTagName"]         = (mainResult.values["waitingTagName"] || "").trim();
         const parsedStale = parseInt(mainResult.values["waitingStaleDays"], 10);
-        prefs["waitingStaleDays"]       = Number.isNaN(parsedStale) ? 21 : parsedStale;
-        prefs["enableWaitingSinceStamp"] = mainResult.values["enableWaitingSinceStamp"];
-        prefs["triageTagName"]          = (mainResult.values["triageTagName"] || "").trim();
-        prefs["pluginVersion"]          = "1.0";
+
+        lib.savePrefs({
+            reviewTagName:           (mainResult.values["reviewTagName"] || "").trim(),
+            alsoFlag:                mainResult.values["alsoFlag"],
+            scopeMode:               mainResult.values["scopeMode"],
+            scopeFolderId:           newScopeFolderId,
+            scopeTagId:              newScopeTagId,
+            excludeTagNames:         (mainResult.values["excludeTagNames"] || "").trim(),
+            includeOnHoldProjects:   mainResult.values["includeOnHoldProjects"],
+            lintTasksEnabled:        mainResult.values["lintTasksEnabled"],
+            inboxMaxAgeDays:         Number.isNaN(parsedInbox) ? 2 : parsedInbox,
+            deferPastGraceDays:      Number.isNaN(parsedDefer) ? 7 : parsedDefer,
+            waitingTagName:          (mainResult.values["waitingTagName"] || "").trim(),
+            waitingStaleDays:        Number.isNaN(parsedStale) ? 21 : parsedStale,
+            enableWaitingSinceStamp: mainResult.values["enableWaitingSinceStamp"],
+            triageTagName:           (mainResult.values["triageTagName"] || "").trim(),
+            pluginVersion:           "1.0"
+        });
 
         await lib.showAlert("Preferences Saved", "Review Linter settings updated.");
 
