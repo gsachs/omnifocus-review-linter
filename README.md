@@ -17,6 +17,16 @@ An OmniFocus plugin that audits your projects and tasks for GTD hygiene issues. 
 
 3. Open OmniFocus and look for the five actions in **Automation → Review Linter**
 
+### For Developers: Packaging the Bundle
+
+To create a distributable `.zip` file from the source:
+
+```bash
+ditto -c -k --sequesterRsrc ReviewLinter.omnifocusjs ReviewLinter.omnifocusjs.zip
+```
+
+This creates a macOS-compatible zip that preserves the bundle structure. The resulting `ReviewLinter.omnifocusjs.zip` can be distributed to users, who can then unzip and double-click to install.
+
 ## Actions
 
 ### 1. Lint Sweep

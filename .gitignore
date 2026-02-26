@@ -1,2 +1,4 @@
 init.txt
 compound-engineering.local.md
+*.zip
+.DS_Store
