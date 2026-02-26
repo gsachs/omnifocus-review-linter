@@ -14,7 +14,7 @@
     const action = new PlugIn.Action(async function(selection, sender) {
         try {
             const lib   = this.plugIn.library("lintUtils");
-            const prefs = lib.loadPrefs();
+            const prefs = this.plugIn.preferences;
 
             const now    = new Date();
             const today  = lib.formatDate(now);

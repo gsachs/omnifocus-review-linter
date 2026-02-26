@@ -13,7 +13,7 @@
 (() => {
     const action = new PlugIn.Action(async function(selection, sender) {
         const lib      = this.plugIn.library("lintUtils");
-        const prefs    = lib.loadPrefs();
+        const prefs    = this.plugIn.preferences;
         const alsoFlag = lib.readPref(prefs, "alsoFlag");
 
         // ── Find the review tag ───────────────────────────────────────────────

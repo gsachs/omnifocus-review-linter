@@ -26,26 +26,6 @@
         triageTagName:          "Needs Triage"
     };
 
-    // ─── Preferences storage ──────────────────────────────────────────────────
-    //
-    // PlugIn.preferences is undefined in some OmniFocus builds (the com.omnifocus
-    // namespace appears to be reserved). We fall back to storing a JSON blob in
-    // the note of a dedicated hidden tag that is never shown to end-users.
-
-    lib.PREFS_TAG_NAME = "ReviewLinter.settings";
-
-    lib.loadPrefs = function() {
-        const tag = flattenedTags.byName(lib.PREFS_TAG_NAME);
-        if (!tag || !tag.note) return {};
-        try { return JSON.parse(tag.note); } catch (_) { return {}; }
-    };
-
-    lib.savePrefs = function(data) {
-        let tag = flattenedTags.byName(lib.PREFS_TAG_NAME);
-        if (!tag) tag = new Tag(lib.PREFS_TAG_NAME);
-        tag.note = JSON.stringify(data);
-    };
-
     // ─── Preferences helpers ──────────────────────────────────────────────────
 
     lib.readPref = function(prefs, key, defaultValue) {
