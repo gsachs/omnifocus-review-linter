@@ -327,7 +327,7 @@
         const encodedTag = encodeURIComponent(tagName);
         const url        = URL.fromString("omnifocus:///tag/" + encodedTag);
         if (url) {
-            app.openURL(url);
+            url.open();
         } else {
             const alert = new Alert(
                 "Open Lint Queue",
