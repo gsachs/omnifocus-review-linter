@@ -106,11 +106,17 @@
         ));
 
         mainForm.validate = function(f) {
-            if ((f.values["reviewTagName"] || "").trim().length === 0) return false;
+            const tagFields = ["reviewTagName", "waitingTagName", "triageTagName"];
+            for (const key of tagFields) {
+                const val = (f.values[key] || "").trim();
+                if (val.length === 0 && key === "reviewTagName") return false;
+                if (val.length > 255) return false;
+                if (/[\r\n\0]/.test(val)) return false;
+            }
             const numFields = ["inboxMaxAgeDays", "deferPastGraceDays", "waitingStaleDays"];
             for (const key of numFields) {
                 const val = parseInt(f.values[key], 10);
-                if (Number.isNaN(val) || val < 0) return false;
+                if (Number.isNaN(val) || val < 0 || val > 3650) return false;
             }
             return true;
         };
@@ -174,10 +180,6 @@
             await err.show();
         }
     });
-
-    action.validate = function(selection, sender) {
-        return true;
-    };
 
     return action;
 })();

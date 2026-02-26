@@ -19,9 +19,5 @@
         await lib.navigateToTag(tagName);
     });
 
-    action.validate = function(selection, sender) {
-        return true;
-    };
-
     return action;
 })();

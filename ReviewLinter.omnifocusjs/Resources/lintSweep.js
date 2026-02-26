@@ -20,6 +20,7 @@
             const today  = lib.formatDate(now);
             const alsoFlag = lib.readPref(prefs, "alsoFlag");
             const excludeTagNames = lib.parseExcludeTags(lib.readPref(prefs, "excludeTagNames"));
+            const lintTasksEnabled = lib.readPref(prefs, "lintTasksEnabled");
 
             // ── Scope validation ──────────────────────────────────────────────────
 
@@ -37,9 +38,9 @@
 
             // ── Ensure review tag ─────────────────────────────────────────────────
 
-            const reviewTag = lib.findOrCreateTag(lib.readPref(prefs, "reviewTagName"));
+            const tagName = lib.readPref(prefs, "reviewTagName");
+            const reviewTag = lib.findOrCreateTag(tagName);
             if (!reviewTag) {
-                const tagName = lib.readPref(prefs, "reviewTagName");
                 await lib.showAlert(
                     "Cannot Create Review Tag",
                     `The tag "${tagName}" could not be found or created. ` +
@@ -79,7 +80,7 @@
                 reasons.forEach(r => { projectCounts[r] = (projectCounts[r] || 0) + 1; });
 
                 // Add review tag to project's root task
-                const alreadyTagged = project.task.tags.some(t => t.name === reviewTag.name);
+                const alreadyTagged = project.task.tags.some(t => t.id.primaryKey === reviewTag.id.primaryKey);
                 if (!alreadyTagged) project.task.addTag(reviewTag);
 
                 if (alsoFlag) project.flagged = true;
@@ -93,7 +94,7 @@
 
             // ── Task scan ─────────────────────────────────────────────────────────
 
-            if (lib.readPref(prefs, "lintTasksEnabled")) {
+            if (lintTasksEnabled) {
                 const tasks = lib.resolveTasksForLint(prefs, projects);
 
                 for (const task of tasks) {
@@ -108,7 +109,7 @@
                     taskCounts.flagged++;
                     reasons.forEach(r => { taskCounts[r] = (taskCounts[r] || 0) + 1; });
 
-                    const alreadyTagged = task.tags.some(t => t.name === reviewTag.name);
+                    const alreadyTagged = task.tags.some(t => t.id.primaryKey === reviewTag.id.primaryKey);
                     if (!alreadyTagged) task.addTag(reviewTag);
 
                     if (alsoFlag) task.flagged = true;
@@ -140,7 +141,7 @@
                 msg += "  · (P_NO_NEXT_ACTION check skipped for " + projectCounts.skippedNoNextAction + " — taskStatus unavailable)\n";
             }
 
-            if (lib.readPref(prefs, "lintTasksEnabled")) {
+            if (lintTasksEnabled) {
                 msg += "\nTasks flagged: " + taskCounts.flagged + "\n";
                 if (taskCounts.T_OVERDUE)          msg += "  · Overdue: "       + taskCounts.T_OVERDUE         + "\n";
                 if (taskCounts.T_DEFER_PAST)       msg += "  · Defer Past: "    + taskCounts.T_DEFER_PAST      + "\n";
@@ -161,7 +162,7 @@
             const choice = await summary.show();
 
             if (choice === 0) {
-                await lib.navigateToTag(lib.readPref(prefs, "reviewTagName"));
+                await lib.navigateToTag(tagName);
             } else if (choice === 1) {
                 await lib.showAlert(
                     "Run Fix Pack",
@@ -175,10 +176,6 @@
             await err.show();
         }
     });
-
-    action.validate = function(selection, sender) {
-        return true;
-    };
 
     return action;
 })();

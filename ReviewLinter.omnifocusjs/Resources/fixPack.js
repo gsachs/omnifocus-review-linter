@@ -21,8 +21,8 @@
         const inboxMaxAgeDays    = lib.readPref(prefs, "inboxMaxAgeDays");
         const triageTagName      = lib.readPref(prefs, "triageTagName");
         const deferPastGraceDays = lib.readPref(prefs, "deferPastGraceDays");
-        const today              = lib.formatDate(new Date());
         const now                = new Date();
+        const today              = lib.formatDate(now);
 
         // ── Toggle form ───────────────────────────────────────────────────────
 
@@ -205,20 +205,17 @@
 
         // ── Summary ───────────────────────────────────────────────────────────
 
+        const s = n => n !== 1 ? "s" : "";
         const parts = [];
-        if (waitingAdded  > 0) parts.push(waitingAdded  + " @waitingSince stamp" + (waitingAdded  !== 1 ? "s" : "") + " added.");
-        if (waitingReset  > 0) parts.push(waitingReset  + " stale @waitingSince stamp" + (waitingReset  !== 1 ? "s" : "") + " reset.");
-        if (inboxTriaged  > 0) parts.push(inboxTriaged  + ' inbox item' + (inboxTriaged  !== 1 ? "s" : "") + ' tagged "' + triageTagName + '".');
-        if (deferRepaired > 0) parts.push(deferRepaired + " defer date" + (deferRepaired !== 1 ? "s" : "") + " repaired (" + deferPolicy + ").");
-        if (dueRepaired   > 0) parts.push(dueRepaired   + " due date"   + (dueRepaired   !== 1 ? "s" : "") + " repaired (" + duePolicy + ").");
+        if (waitingAdded  > 0) parts.push(waitingAdded  + " @waitingSince stamp" + s(waitingAdded)  + " added.");
+        if (waitingReset  > 0) parts.push(waitingReset  + " stale @waitingSince stamp" + s(waitingReset) + " reset.");
+        if (inboxTriaged  > 0) parts.push(inboxTriaged  + ' inbox item' + s(inboxTriaged)  + ' tagged "' + triageTagName + '".');
+        if (deferRepaired > 0) parts.push(deferRepaired + " defer date" + s(deferRepaired) + " repaired (" + deferPolicy + ").");
+        if (dueRepaired   > 0) parts.push(dueRepaired   + " due date"   + s(dueRepaired)   + " repaired (" + duePolicy + ").");
 
         const msg = parts.length > 0 ? parts.join("\n") : "No changes made.";
         await lib.showAlert("Fix Pack Complete", msg, "Done");
     });
-
-    action.validate = function(selection, sender) {
-        return true;
-    };
 
     return action;
 })();

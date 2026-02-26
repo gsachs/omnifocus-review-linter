@@ -131,9 +131,5 @@
         await lib.showAlert("Clear Lint Marks", msg, "Done");
     });
 
-    action.validate = function(selection, sender) {
-        return true;
-    };
-
     return action;
 })();

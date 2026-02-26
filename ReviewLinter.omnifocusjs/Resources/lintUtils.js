@@ -33,7 +33,6 @@
 
     lib.readPref = function(prefs, key, defaultValue) {
         const fallback = (defaultValue !== undefined) ? defaultValue : lib.DEFAULTS[key];
-        if (!prefs) return fallback;
         const val = prefs.read(key);
         return (val === null || val === undefined) ? fallback : val;
     };
@@ -108,9 +107,8 @@
     // ─── Scope helpers ────────────────────────────────────────────────────────
 
     lib.isRemaining = function(task) {
-        if (task.taskStatus === Task.Status.Completed) return false;
-        if (task.taskStatus === Task.Status.Dropped)   return false;
-        return true;
+        return task.taskStatus !== Task.Status.Completed &&
+               task.taskStatus !== Task.Status.Dropped;
     };
 
     lib.parseExcludeTags = function(csv) {
@@ -334,13 +332,11 @@
         if (url) {
             url.open();
         } else {
-            const alert = new Alert(
+            await lib.showAlert(
                 "Open Lint Queue",
                 'Could not build a navigation URL. ' +
                 'Please filter by the tag "' + tagName + '" in OmniFocus manually.'
             );
-            alert.addOption("OK");
-            await alert.show();
         }
     };
 
