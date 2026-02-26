@@ -31,7 +31,7 @@
     lib.readPref = function(prefs, key, defaultValue) {
         const fallback = (defaultValue !== undefined) ? defaultValue : lib.DEFAULTS[key];
         if (!prefs) return fallback;
-        const val = typeof prefs.read === "function" ? prefs.read(key) : prefs[key];
+        const val = prefs[key];
         return (val === null || val === undefined) ? fallback : val;
     };
 
@@ -105,7 +105,9 @@
     // ─── Scope helpers ────────────────────────────────────────────────────────
 
     lib.isRemaining = function(task) {
-        return !task.completed && !task.dropped;
+        if (task.completed) return false;
+        if (task.taskStatus === Task.Status.Dropped) return false;
+        return true;
     };
 
     lib.parseExcludeTags = function(csv) {
@@ -177,10 +179,10 @@
             }
         };
 
-        // Tasks within in-scope projects (remaining only)
+        // Tasks within in-scope projects (remaining only, exclude the project root task)
         for (const proj of projects) {
             proj.flattenedTasks.forEach(t => {
-                if (lib.isRemaining(t)) add(t);
+                if (lib.isRemaining(t) && t !== proj.task) add(t);
             });
         }
 
@@ -234,7 +236,7 @@
         const reasons          = [];
         let skipNoNextAction   = false;
 
-        const remainingTasks = project.flattenedTasks.filter(lib.isRemaining);
+        const remainingTasks = project.flattenedTasks.filter(t => lib.isRemaining(t) && t !== project.task);
 
         // P_EMPTY
         if (remainingTasks.length === 0) {
