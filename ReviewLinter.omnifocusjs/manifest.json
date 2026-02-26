@@ -1,0 +1,49 @@
+{
+    "defaultLocale": "en",
+    "identifier": "com.omnifocus.review-linter",
+    "version": "1.0",
+    "author": "Review Linter Contributors",
+    "description": "Audits OmniFocus projects and tasks for GTD hygiene issues.",
+    "actions": [
+        {
+            "identifier": "lintSweep",
+            "label": "Lint Sweep",
+            "shortLabel": "Lint Sweep",
+            "description": "Scan active projects and tasks for lint issues.",
+            "image": "checkmark.circle"
+        },
+        {
+            "identifier": "openLintQueue",
+            "label": "Open Lint Queue",
+            "shortLabel": "Lint Queue",
+            "description": "Navigate to the lint review tag.",
+            "image": "tag"
+        },
+        {
+            "identifier": "clearLintMarks",
+            "label": "Clear Lint Marks",
+            "shortLabel": "Clear Marks",
+            "description": "Remove lint tags and optional stamps.",
+            "image": "xmark.circle"
+        },
+        {
+            "identifier": "fixPack",
+            "label": "Fix Pack",
+            "shortLabel": "Fix Pack",
+            "description": "Auto-remediate common lint issues.",
+            "image": "wrench"
+        },
+        {
+            "identifier": "configure",
+            "label": "Configure Review Linter",
+            "shortLabel": "Configure",
+            "description": "Set preferences for the Review Linter plugin.",
+            "image": "gear"
+        }
+    ],
+    "libraries": [
+        {
+            "identifier": "lintUtils"
+        }
+    ]
+}

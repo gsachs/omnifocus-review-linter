@@ -1,0 +1,177 @@
+/*{
+    "type": "action",
+    "targets": ["omnifocus"],
+    "author": "Review Linter Contributors",
+    "identifier": "com.omnifocus.review-linter.configure",
+    "version": "1.0",
+    "description": "Set preferences for the Review Linter plugin.",
+    "label": "Configure Review Linter",
+    "shortLabel": "Configure",
+    "paletteLabel": "Configure Review Linter",
+    "image": "gear"
+}*/
+(() => {
+    const action = new PlugIn.Action(async function(selection, sender) {
+        const lib   = this.plugIn.library("lintUtils");
+        const prefs = this.plugIn.preferences;
+
+        // ── Step 1: Main settings form ────────────────────────────────────────
+
+        const reviewTagName       = lib.readPref(prefs, "reviewTagName");
+        const alsoFlag            = lib.readPref(prefs, "alsoFlag");
+        const scopeMode           = lib.readPref(prefs, "scopeMode");
+        const excludeTagNames     = lib.readPref(prefs, "excludeTagNames");
+        const includeOnHold       = lib.readPref(prefs, "includeOnHoldProjects");
+        const lintTasksEnabled    = lib.readPref(prefs, "lintTasksEnabled");
+        const inboxMaxAgeDays     = lib.readPref(prefs, "inboxMaxAgeDays");
+        const deferPastGraceDays  = lib.readPref(prefs, "deferPastGraceDays");
+        const waitingTagName      = lib.readPref(prefs, "waitingTagName");
+        const waitingStaleDays    = lib.readPref(prefs, "waitingStaleDays");
+        const enableWaiting       = lib.readPref(prefs, "enableWaitingSinceStamp");
+        const triageTagName       = lib.readPref(prefs, "triageTagName");
+
+        const mainForm = new Form();
+        mainForm.addField(new Form.Field.String(
+            "reviewTagName", "Review Tag Name", reviewTagName, null
+        ));
+        mainForm.addField(new Form.Field.Checkbox(
+            "alsoFlag", "Also flag marked items", alsoFlag
+        ));
+        mainForm.addField(new Form.Field.Option(
+            "scopeMode", "Scope",
+            ["ALL_ACTIVE_PROJECTS", "FOLDER_SCOPE", "TAG_SCOPE"],
+            ["All Active Projects", "Folder Scope", "Tag Scope"],
+            scopeMode
+        ));
+        mainForm.addField(new Form.Field.String(
+            "excludeTagNames", "Exclude Tags (comma-separated)", excludeTagNames, null
+        ));
+        mainForm.addField(new Form.Field.Checkbox(
+            "includeOnHoldProjects", "Include On-Hold Projects", includeOnHold
+        ));
+        mainForm.addField(new Form.Field.Checkbox(
+            "lintTasksEnabled", "Lint Tasks", lintTasksEnabled
+        ));
+        mainForm.addField(new Form.Field.String(
+            "inboxMaxAgeDays", "Inbox Max Age (days)", String(inboxMaxAgeDays), null
+        ));
+        mainForm.addField(new Form.Field.String(
+            "deferPastGraceDays", "Defer Past Grace (days)", String(deferPastGraceDays), null
+        ));
+        mainForm.addField(new Form.Field.String(
+            "waitingTagName", "Waiting Tag Name", waitingTagName, null
+        ));
+        mainForm.addField(new Form.Field.String(
+            "waitingStaleDays", "Waiting Stale (days)", String(waitingStaleDays), null
+        ));
+        mainForm.addField(new Form.Field.Checkbox(
+            "enableWaitingSinceStamp", "Enable @waitingSince Stamps", enableWaiting
+        ));
+        mainForm.addField(new Form.Field.String(
+            "triageTagName", "Triage Tag Name", triageTagName, null
+        ));
+
+        mainForm.validate = function(f) {
+            return (f.values["reviewTagName"] || "").trim().length > 0;
+        };
+
+        let mainResult;
+        try {
+            mainResult = await mainForm.show("Configure Review Linter", "Next");
+        } catch (e) {
+            return; // cancelled
+        }
+
+        const newScopeMode = mainResult.values["scopeMode"];
+
+        // ── Step 2: Scope picker (only when folder/tag scope chosen) ──────────
+
+        let newScopeFolderId = lib.readPref(prefs, "scopeFolderId");
+        let newScopeTagId    = lib.readPref(prefs, "scopeTagId");
+
+        if (newScopeMode === "FOLDER_SCOPE") {
+            const allFolders = Array.from(flattenedFolders).filter(
+                f => f.status === Folder.Status.Active
+            );
+            if (allFolders.length === 0) {
+                const err = new Alert("No Folders Found",
+                    "There are no active folders in your database. " +
+                    "Scope mode reverted to All Active Projects.");
+                err.addOption("OK");
+                await err.show();
+                mainResult.values["scopeMode"] = "ALL_ACTIVE_PROJECTS";
+            } else {
+                const folderIds   = allFolders.map(f => f.id.primaryKey);
+                const folderNames = allFolders.map(f => f.name);
+                const currentIdx  = folderIds.indexOf(newScopeFolderId);
+                const defaultId   = currentIdx >= 0 ? newScopeFolderId : folderIds[0];
+
+                const folderForm = new Form();
+                folderForm.addField(new Form.Field.Option(
+                    "folderId", "Select Folder", folderIds, folderNames, defaultId
+                ));
+                try {
+                    const res = await folderForm.show("Select Scope Folder", "Save");
+                    newScopeFolderId = res.values["folderId"];
+                } catch (e) {
+                    return; // cancelled
+                }
+            }
+
+        } else if (newScopeMode === "TAG_SCOPE") {
+            const allTags = Array.from(flattenedTags);
+            if (allTags.length === 0) {
+                const err = new Alert("No Tags Found",
+                    "There are no tags in your database. " +
+                    "Scope mode reverted to All Active Projects.");
+                err.addOption("OK");
+                await err.show();
+                mainResult.values["scopeMode"] = "ALL_ACTIVE_PROJECTS";
+            } else {
+                const tagIds   = allTags.map(t => t.id.primaryKey);
+                const tagNames = allTags.map(t => t.name);
+                const currentIdx = tagIds.indexOf(newScopeTagId);
+                const defaultId  = currentIdx >= 0 ? newScopeTagId : tagIds[0];
+
+                const tagForm = new Form();
+                tagForm.addField(new Form.Field.Option(
+                    "tagId", "Select Tag", tagIds, tagNames, defaultId
+                ));
+                try {
+                    const res = await tagForm.show("Select Scope Tag", "Save");
+                    newScopeTagId = res.values["tagId"];
+                } catch (e) {
+                    return; // cancelled
+                }
+            }
+        }
+
+        // ── Save all preferences ──────────────────────────────────────────────
+
+        prefs["reviewTagName"]          = (mainResult.values["reviewTagName"] || "").trim();
+        prefs["alsoFlag"]               = mainResult.values["alsoFlag"];
+        prefs["scopeMode"]              = mainResult.values["scopeMode"];
+        prefs["scopeFolderId"]          = newScopeFolderId;
+        prefs["scopeTagId"]             = newScopeTagId;
+        prefs["excludeTagNames"]        = (mainResult.values["excludeTagNames"] || "").trim();
+        prefs["includeOnHoldProjects"]  = mainResult.values["includeOnHoldProjects"];
+        prefs["lintTasksEnabled"]       = mainResult.values["lintTasksEnabled"];
+        prefs["inboxMaxAgeDays"]        = parseInt(mainResult.values["inboxMaxAgeDays"]) || 2;
+        prefs["deferPastGraceDays"]     = parseInt(mainResult.values["deferPastGraceDays"]) || 7;
+        prefs["waitingTagName"]         = (mainResult.values["waitingTagName"] || "").trim();
+        prefs["waitingStaleDays"]       = parseInt(mainResult.values["waitingStaleDays"]) || 21;
+        prefs["enableWaitingSinceStamp"] = mainResult.values["enableWaitingSinceStamp"];
+        prefs["triageTagName"]          = (mainResult.values["triageTagName"] || "").trim();
+        prefs["pluginVersion"]          = "1.0";
+
+        const done = new Alert("Preferences Saved", "Review Linter settings updated.");
+        done.addOption("OK");
+        await done.show();
+    });
+
+    action.validate = function(selection, sender) {
+        return true;
+    };
+
+    return action;
+})();
