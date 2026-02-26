@@ -12,6 +12,15 @@
 }*/
 (() => {
     const action = new PlugIn.Action(async function(selection, sender) {
+        // DIAGNOSTIC — remove after confirming plugin works
+        try {
+            const lib = this.plugIn.library("lintUtils");
+            new Alert("Debug: library OK", "lintUtils loaded. Running sweep…").show();
+        } catch (e) {
+            new Alert("Debug: library FAILED", String(e)).show();
+            return;
+        }
+
         const lib   = this.plugIn.library("lintUtils");
         const prefs = this.plugIn.preferences;
 
