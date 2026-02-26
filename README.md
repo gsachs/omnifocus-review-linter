@@ -125,3 +125,9 @@ Inbox tasks are always included in task linting, regardless of scope mode.
 - **Preferences are per-device.** Settings do not sync across Macs.
 - **`P_NO_NEXT_ACTION` requires OmniFocus 3+.** The check relies on `task.taskStatus`. If this property is unavailable on your build, the check is skipped and reported in the sweep summary.
 - **T_INBOX_OLD requires OmniFocus 4.** The inbox age check relies on `task.addedDate`, which is only available in OmniFocus 4. On OmniFocus 3, affected tasks are counted as skipped in the summary.
+
+## License
+
+This plugin is released under the **MIT License**. See the LICENSE file for details.
+
+You are free to use, modify, and distribute this plugin under the terms of the MIT License.
