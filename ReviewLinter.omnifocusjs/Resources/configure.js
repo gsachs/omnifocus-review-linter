@@ -12,8 +12,24 @@
 }*/
 (() => {
     const action = new PlugIn.Action(async function(selection, sender) {
-        const lib   = this.plugIn.library("lintUtils");
-        const prefs = this.plugIn.preferences;
+        try {
+
+        const lib    = this.plugIn.library("lintUtils");
+        let   prefs  = this.plugIn.preferences;
+
+        // ── Ensure preferences object ─────────────────────────────────────────
+        if (!prefs) {
+            try { prefs = new PlugIn.Preferences(this.plugIn.identifier); } catch (_) {}
+        }
+        if (!prefs) {
+            await lib.showAlert(
+                "Preferences Unavailable",
+                "Could not access the plugin preferences store (this.plugIn.preferences is " +
+                (this.plugIn.preferences === null ? "null" : "undefined") + ").\n" +
+                "Try reinstalling the plugin or restarting OmniFocus."
+            );
+            return;
+        }
 
         // ── Step 1: Main settings form ────────────────────────────────────────
 
@@ -174,6 +190,12 @@
         prefs["pluginVersion"]          = "1.0";
 
         await lib.showAlert("Preferences Saved", "Review Linter settings updated.");
+
+        } catch (e) {
+            const err = new Alert("Configure Error", String(e));
+            err.addOption("OK");
+            await err.show();
+        }
     });
 
     action.validate = function(selection, sender) {
