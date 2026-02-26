@@ -43,8 +43,7 @@
     ],
     "libraries": [
         {
-            "identifier": "lintUtils",
-            "path": "Actions/lintUtils.js"
+            "identifier": "lintUtils"
         }
     ]
 }
