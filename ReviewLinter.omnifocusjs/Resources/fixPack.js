@@ -57,6 +57,17 @@
             ["Set defer date to today", "Clear defer date"],
             "today"
         ));
+        toggleForm.addField(new Form.Field.Checkbox(
+            "repairDue",
+            'Repair overdue due dates',
+            false
+        ));
+        toggleForm.addField(new Form.Field.Option(
+            "duePolicy", "Due Date Repair Policy",
+            ["today", "next_week", "clear"],
+            ["Set to today", "Set to next week", "Clear due date"],
+            "today"
+        ));
 
         let toggleResult;
         try {
@@ -70,8 +81,10 @@
         const doTriage       = toggleResult.values["triageInbox"];
         const doRepairDefer  = toggleResult.values["repairDefer"];
         const deferPolicy    = toggleResult.values["deferPolicy"];
+        const doRepairDue    = toggleResult.values["repairDue"];
+        const duePolicy      = toggleResult.values["duePolicy"];
 
-        if (!doAddWaiting && !doResetWaiting && !doTriage && !doRepairDefer) {
+        if (!doAddWaiting && !doResetWaiting && !doTriage && !doRepairDefer && !doRepairDue) {
             await lib.showAlert("Fix Pack", "No fixes selected. Nothing to do.");
             return;
         }
@@ -113,6 +126,7 @@
         let waitingReset   = 0;
         let inboxTriaged   = 0;
         let deferRepaired  = 0;
+        let dueRepaired    = 0;
 
         for (const task of allTasks) {
             // ── Add @waitingSince to waiting tasks that lack it ───────────────
@@ -173,6 +187,20 @@
                     deferRepaired++;
                 }
             }
+
+            // ── Repair overdue due dates ──────────────────────────────────────
+            if (doRepairDue && task.dueDate && task.dueDate < now) {
+                if (duePolicy === "today") {
+                    task.dueDate = lib.startOfToday();
+                } else if (duePolicy === "next_week") {
+                    const d = lib.startOfToday();
+                    d.setDate(d.getDate() + 7);
+                    task.dueDate = d;
+                } else {
+                    task.dueDate = null;
+                }
+                dueRepaired++;
+            }
         }
 
         // ── Summary ───────────────────────────────────────────────────────────
@@ -182,6 +210,7 @@
         if (waitingReset  > 0) parts.push(waitingReset  + " stale @waitingSince stamp" + (waitingReset  !== 1 ? "s" : "") + " reset.");
         if (inboxTriaged  > 0) parts.push(inboxTriaged  + ' inbox item' + (inboxTriaged  !== 1 ? "s" : "") + ' tagged "' + triageTagName + '".');
         if (deferRepaired > 0) parts.push(deferRepaired + " defer date" + (deferRepaired !== 1 ? "s" : "") + " repaired (" + deferPolicy + ").");
+        if (dueRepaired   > 0) parts.push(dueRepaired   + " due date"   + (dueRepaired   !== 1 ? "s" : "") + " repaired (" + duePolicy + ").");
 
         const msg = parts.length > 0 ? parts.join("\n") : "No changes made.";
         await lib.showAlert("Fix Pack Complete", msg, "Done");

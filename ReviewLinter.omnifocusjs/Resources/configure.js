@@ -17,20 +17,31 @@
         const lib   = this.plugIn.library("lintUtils");
         const prefs = lib.prefs;
 
-        // ── Step 1: Main settings form ────────────────────────────────────────
+        // ── Read current preferences ──────────────────────────────────────────
 
-        const reviewTagName       = lib.readPref(prefs, "reviewTagName");
-        const alsoFlag            = lib.readPref(prefs, "alsoFlag");
-        const scopeMode           = lib.readPref(prefs, "scopeMode");
-        const excludeTagNames     = lib.readPref(prefs, "excludeTagNames");
-        const includeOnHold       = lib.readPref(prefs, "includeOnHoldProjects");
-        const lintTasksEnabled    = lib.readPref(prefs, "lintTasksEnabled");
-        const inboxMaxAgeDays     = lib.readPref(prefs, "inboxMaxAgeDays");
-        const deferPastGraceDays  = lib.readPref(prefs, "deferPastGraceDays");
-        const waitingTagName      = lib.readPref(prefs, "waitingTagName");
-        const waitingStaleDays    = lib.readPref(prefs, "waitingStaleDays");
-        const enableWaiting       = lib.readPref(prefs, "enableWaitingSinceStamp");
-        const triageTagName       = lib.readPref(prefs, "triageTagName");
+        const reviewTagName      = lib.readPref(prefs, "reviewTagName");
+        const alsoFlag           = lib.readPref(prefs, "alsoFlag");
+        const scopeMode          = lib.readPref(prefs, "scopeMode");
+        const excludeTagNames    = lib.readPref(prefs, "excludeTagNames");
+        const includeOnHold      = lib.readPref(prefs, "includeOnHoldProjects");
+        const lintTasksEnabled   = lib.readPref(prefs, "lintTasksEnabled");
+        const inboxMaxAgeDays    = lib.readPref(prefs, "inboxMaxAgeDays");
+        const deferPastGraceDays = lib.readPref(prefs, "deferPastGraceDays");
+        const waitingTagName     = lib.readPref(prefs, "waitingTagName");
+        const waitingStaleDays   = lib.readPref(prefs, "waitingStaleDays");
+        const enableWaiting      = lib.readPref(prefs, "enableWaitingSinceStamp");
+        const triageTagName      = lib.readPref(prefs, "triageTagName");
+        const savedFolderId      = lib.readPref(prefs, "scopeFolderId");
+        const savedTagId         = lib.readPref(prefs, "scopeTagId");
+
+        // ── Pre-enumerate folders and tags for inline pickers ─────────────────
+
+        const allFolders = Array.from(flattenedFolders).filter(
+            f => f.status === Folder.Status.Active
+        );
+        const allTags = Array.from(flattenedTags);
+
+        // ── Build single form ─────────────────────────────────────────────────
 
         const mainForm = new Form();
         mainForm.addField(new Form.Field.String(
@@ -45,6 +56,27 @@
             ["All Active Projects", "Folder Scope", "Tag Scope"],
             scopeMode
         ));
+
+        if (allFolders.length > 0) {
+            const folderIds   = allFolders.map(f => f.id.primaryKey);
+            const folderNames = allFolders.map(f => f.name);
+            const defaultId   = folderIds.includes(savedFolderId) ? savedFolderId : folderIds[0];
+            mainForm.addField(new Form.Field.Option(
+                "scopeFolderId", "Scope Folder (if Folder Scope)",
+                folderIds, folderNames, defaultId
+            ));
+        }
+
+        if (allTags.length > 0) {
+            const tagIds   = allTags.map(t => t.id.primaryKey);
+            const tagNames = allTags.map(t => t.name);
+            const defaultId = tagIds.includes(savedTagId) ? savedTagId : tagIds[0];
+            mainForm.addField(new Form.Field.Option(
+                "scopeTagId", "Scope Tag (if Tag Scope)",
+                tagIds, tagNames, defaultId
+            ));
+        }
+
         mainForm.addField(new Form.Field.String(
             "excludeTagNames", "Exclude Tags (comma-separated)", excludeTagNames, null
         ));
@@ -83,98 +115,56 @@
             return true;
         };
 
-        let mainResult;
+        let result;
         try {
-            mainResult = await mainForm.show("Configure Review Linter", "Next");
+            result = await mainForm.show("Configure Review Linter", "Save");
         } catch (e) {
             return; // cancelled
         }
 
-        const newScopeMode = mainResult.values["scopeMode"];
+        // ── Resolve scope — alert and revert if chosen scope has no targets ───
 
-        // ── Step 2: Scope picker (only when folder/tag scope chosen) ──────────
+        let newScopeMode     = result.values["scopeMode"];
+        let newScopeFolderId = result.values["scopeFolderId"] || savedFolderId;
+        let newScopeTagId    = result.values["scopeTagId"]    || savedTagId;
 
-        let newScopeFolderId = lib.readPref(prefs, "scopeFolderId");
-        let newScopeTagId    = lib.readPref(prefs, "scopeTagId");
-
-        if (newScopeMode === "FOLDER_SCOPE") {
-            const allFolders = Array.from(flattenedFolders).filter(
-                f => f.status === Folder.Status.Active
+        if (newScopeMode === "FOLDER_SCOPE" && allFolders.length === 0) {
+            await lib.showAlert(
+                "No Folders Found",
+                "There are no active folders in your database. " +
+                "Scope mode reverted to All Active Projects."
             );
-            if (allFolders.length === 0) {
-                await lib.showAlert(
-                    "No Folders Found",
-                    "There are no active folders in your database. " +
-                    "Scope mode reverted to All Active Projects."
-                );
-                mainResult.values["scopeMode"] = "ALL_ACTIVE_PROJECTS";
-            } else {
-                const folderIds   = allFolders.map(f => f.id.primaryKey);
-                const folderNames = allFolders.map(f => f.name);
-                const currentIdx  = folderIds.indexOf(newScopeFolderId);
-                const defaultId   = currentIdx >= 0 ? newScopeFolderId : folderIds[0];
-
-                const folderForm = new Form();
-                folderForm.addField(new Form.Field.Option(
-                    "folderId", "Select Folder", folderIds, folderNames, defaultId
-                ));
-                try {
-                    const res = await folderForm.show("Select Scope Folder", "Save");
-                    newScopeFolderId = res.values["folderId"];
-                } catch (e) {
-                    return; // cancelled
-                }
-            }
-
-        } else if (newScopeMode === "TAG_SCOPE") {
-            const allTags = Array.from(flattenedTags);
-            if (allTags.length === 0) {
-                await lib.showAlert(
-                    "No Tags Found",
-                    "There are no tags in your database. " +
-                    "Scope mode reverted to All Active Projects."
-                );
-                mainResult.values["scopeMode"] = "ALL_ACTIVE_PROJECTS";
-            } else {
-                const tagIds   = allTags.map(t => t.id.primaryKey);
-                const tagNames = allTags.map(t => t.name);
-                const currentIdx = tagIds.indexOf(newScopeTagId);
-                const defaultId  = currentIdx >= 0 ? newScopeTagId : tagIds[0];
-
-                const tagForm = new Form();
-                tagForm.addField(new Form.Field.Option(
-                    "tagId", "Select Tag", tagIds, tagNames, defaultId
-                ));
-                try {
-                    const res = await tagForm.show("Select Scope Tag", "Save");
-                    newScopeTagId = res.values["tagId"];
-                } catch (e) {
-                    return; // cancelled
-                }
-            }
+            newScopeMode = "ALL_ACTIVE_PROJECTS";
+        } else if (newScopeMode === "TAG_SCOPE" && allTags.length === 0) {
+            await lib.showAlert(
+                "No Tags Found",
+                "There are no tags in your database. " +
+                "Scope mode reverted to All Active Projects."
+            );
+            newScopeMode = "ALL_ACTIVE_PROJECTS";
         }
 
         // ── Save all preferences ──────────────────────────────────────────────
 
-        const parsedInbox = parseInt(mainResult.values["inboxMaxAgeDays"], 10);
-        const parsedDefer = parseInt(mainResult.values["deferPastGraceDays"], 10);
-        const parsedStale = parseInt(mainResult.values["waitingStaleDays"], 10);
+        const parsedInbox = parseInt(result.values["inboxMaxAgeDays"], 10);
+        const parsedDefer = parseInt(result.values["deferPastGraceDays"], 10);
+        const parsedStale = parseInt(result.values["waitingStaleDays"], 10);
 
-        prefs.write("reviewTagName",         (mainResult.values["reviewTagName"] || "").trim());
-        prefs.write("alsoFlag",              mainResult.values["alsoFlag"]);
-        prefs.write("scopeMode",             mainResult.values["scopeMode"]);
-        prefs.write("scopeFolderId",         newScopeFolderId);
-        prefs.write("scopeTagId",            newScopeTagId);
-        prefs.write("excludeTagNames",       (mainResult.values["excludeTagNames"] || "").trim());
-        prefs.write("includeOnHoldProjects", mainResult.values["includeOnHoldProjects"]);
-        prefs.write("lintTasksEnabled",      mainResult.values["lintTasksEnabled"]);
-        prefs.write("inboxMaxAgeDays",       Number.isNaN(parsedInbox) ? 2 : parsedInbox);
-        prefs.write("deferPastGraceDays",    Number.isNaN(parsedDefer) ? 7 : parsedDefer);
-        prefs.write("waitingTagName",        (mainResult.values["waitingTagName"] || "").trim());
-        prefs.write("waitingStaleDays",      Number.isNaN(parsedStale) ? 21 : parsedStale);
-        prefs.write("enableWaitingSinceStamp", mainResult.values["enableWaitingSinceStamp"]);
-        prefs.write("triageTagName",         (mainResult.values["triageTagName"] || "").trim());
-        prefs.write("pluginVersion",         "1.0");
+        prefs.write("reviewTagName",           (result.values["reviewTagName"] || "").trim());
+        prefs.write("alsoFlag",                result.values["alsoFlag"]);
+        prefs.write("scopeMode",               newScopeMode);
+        prefs.write("scopeFolderId",           newScopeFolderId);
+        prefs.write("scopeTagId",              newScopeTagId);
+        prefs.write("excludeTagNames",         (result.values["excludeTagNames"] || "").trim());
+        prefs.write("includeOnHoldProjects",   result.values["includeOnHoldProjects"]);
+        prefs.write("lintTasksEnabled",        result.values["lintTasksEnabled"]);
+        prefs.write("inboxMaxAgeDays",         Number.isNaN(parsedInbox) ? 2 : parsedInbox);
+        prefs.write("deferPastGraceDays",      Number.isNaN(parsedDefer) ? 7 : parsedDefer);
+        prefs.write("waitingTagName",          (result.values["waitingTagName"] || "").trim());
+        prefs.write("waitingStaleDays",        Number.isNaN(parsedStale) ? 21 : parsedStale);
+        prefs.write("enableWaitingSinceStamp", result.values["enableWaitingSinceStamp"]);
+        prefs.write("triageTagName",           (result.values["triageTagName"] || "").trim());
+        prefs.write("pluginVersion",           "1.0");
 
         await lib.showAlert("Preferences Saved", "Review Linter settings updated.");
 
