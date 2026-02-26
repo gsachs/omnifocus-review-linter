@@ -12,14 +12,7 @@
 }*/
 (() => {
     const action = new PlugIn.Action(async function(selection, sender) {
-        // DIAGNOSTIC — remove after confirming plugin works
         try {
-            const lib = this.plugIn.library("lintUtils");
-            new Alert("Debug: library OK", "lintUtils loaded. Running sweep…").show();
-        } catch (e) {
-            new Alert("Debug: library FAILED", String(e)).show();
-            return;
-        }
 
         const lib   = this.plugIn.library("lintUtils");
         const prefs = this.plugIn.preferences;
@@ -175,6 +168,13 @@
                 "Run Fix Pack",
                 'Open the Automation menu and choose "Fix Pack" to auto-remediate common issues.'
             );
+        }
+    });
+
+        } catch (e) {
+            const err = new Alert("Lint Sweep Error", String(e));
+            err.addOption("OK");
+            await err.show();
         }
     });
 
