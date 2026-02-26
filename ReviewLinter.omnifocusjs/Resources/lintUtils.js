@@ -29,11 +29,10 @@
     // ─── Preferences helpers ──────────────────────────────────────────────────
 
     lib.readPref = function(prefs, key, defaultValue) {
-        const val = prefs[key];
-        if (val === null || val === undefined) {
-            return (defaultValue !== undefined) ? defaultValue : lib.DEFAULTS[key];
-        }
-        return val;
+        const fallback = (defaultValue !== undefined) ? defaultValue : lib.DEFAULTS[key];
+        if (!prefs) return fallback;
+        const val = typeof prefs.read === "function" ? prefs.read(key) : prefs[key];
+        return (val === null || val === undefined) ? fallback : val;
     };
 
     // ─── Date helpers ─────────────────────────────────────────────────────────

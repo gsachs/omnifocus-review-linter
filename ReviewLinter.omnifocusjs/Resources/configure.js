@@ -154,24 +154,24 @@
 
         // ── Save all preferences ──────────────────────────────────────────────
 
-        prefs["reviewTagName"]          = (mainResult.values["reviewTagName"] || "").trim();
-        prefs["alsoFlag"]               = mainResult.values["alsoFlag"];
-        prefs["scopeMode"]              = mainResult.values["scopeMode"];
-        prefs["scopeFolderId"]          = newScopeFolderId;
-        prefs["scopeTagId"]             = newScopeTagId;
-        prefs["excludeTagNames"]        = (mainResult.values["excludeTagNames"] || "").trim();
-        prefs["includeOnHoldProjects"]  = mainResult.values["includeOnHoldProjects"];
-        prefs["lintTasksEnabled"]       = mainResult.values["lintTasksEnabled"];
+        prefs.write("reviewTagName",          (mainResult.values["reviewTagName"] || "").trim());
+        prefs.write("alsoFlag",               mainResult.values["alsoFlag"]);
+        prefs.write("scopeMode",              mainResult.values["scopeMode"]);
+        prefs.write("scopeFolderId",          newScopeFolderId);
+        prefs.write("scopeTagId",             newScopeTagId);
+        prefs.write("excludeTagNames",        (mainResult.values["excludeTagNames"] || "").trim());
+        prefs.write("includeOnHoldProjects",  mainResult.values["includeOnHoldProjects"]);
+        prefs.write("lintTasksEnabled",       mainResult.values["lintTasksEnabled"]);
         const parsedInbox = parseInt(mainResult.values["inboxMaxAgeDays"], 10);
-        prefs["inboxMaxAgeDays"]        = Number.isNaN(parsedInbox) ? 2 : parsedInbox;
+        prefs.write("inboxMaxAgeDays",        Number.isNaN(parsedInbox) ? 2 : parsedInbox);
         const parsedDefer = parseInt(mainResult.values["deferPastGraceDays"], 10);
-        prefs["deferPastGraceDays"]     = Number.isNaN(parsedDefer) ? 7 : parsedDefer;
-        prefs["waitingTagName"]         = (mainResult.values["waitingTagName"] || "").trim();
+        prefs.write("deferPastGraceDays",     Number.isNaN(parsedDefer) ? 7 : parsedDefer);
+        prefs.write("waitingTagName",         (mainResult.values["waitingTagName"] || "").trim());
         const parsedStale = parseInt(mainResult.values["waitingStaleDays"], 10);
-        prefs["waitingStaleDays"]       = Number.isNaN(parsedStale) ? 21 : parsedStale;
-        prefs["enableWaitingSinceStamp"] = mainResult.values["enableWaitingSinceStamp"];
-        prefs["triageTagName"]          = (mainResult.values["triageTagName"] || "").trim();
-        prefs["pluginVersion"]          = "1.0";
+        prefs.write("waitingStaleDays",       Number.isNaN(parsedStale) ? 21 : parsedStale);
+        prefs.write("enableWaitingSinceStamp", mainResult.values["enableWaitingSinceStamp"]);
+        prefs.write("triageTagName",          (mainResult.values["triageTagName"] || "").trim());
+        prefs.write("pluginVersion",          "1.0");
 
         await lib.showAlert("Preferences Saved", "Review Linter settings updated.");
     });
