@@ -17,6 +17,8 @@ An OmniFocus plugin that audits your projects and tasks for GTD hygiene issues. 
 
 3. Open OmniFocus and look for the five actions in **Automation → Review Linter**
 
+![Automation menu showing the five plugin actions](docs/screenshots/automation-menu.png)
+
 ### For Developers: Packaging the Bundle
 
 To create a distributable `.zip` file from the source:
@@ -60,9 +62,13 @@ After sweeping, a summary dialog offers:
 - **Run Fix Pack** — reminder to run Fix Pack for auto-remediation
 - **Done** — dismiss
 
+![Lint Sweep Complete dialog showing flagged project and task counts](docs/screenshots/lint-sweep-complete.png)
+
 ### 2. Open Lint Queue
 
 Navigates directly to the review tag view so you can work through flagged items.
+
+![Lint Queue showing flagged projects tagged with Review Lint](docs/screenshots/lint-queue.png)
 
 ### 3. Clear Lint Marks
 
@@ -84,9 +90,13 @@ Applies conservative auto-fixes. All toggles are **off by default** — you choo
 - **Repair defer dates** — updates or clears defer dates that are stale by more than the grace period
 - **Repair due dates** — sets overdue due dates to today, next week, or clears them
 
+![Fix Pack dialog with per-fix toggles and repair policy dropdowns](docs/screenshots/fix-pack.png)
+
 ### 5. Configure Review Linter
 
 Opens a single settings form with all options in one place, including inline folder and tag pickers for scope selection. All settings persist across OmniFocus sessions.
+
+![Configure Review Linter dialog showing all settings](docs/screenshots/configure.png)
 
 ## Preferences
 
