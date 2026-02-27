@@ -41,6 +41,8 @@ Scans your active projects and tasks for hygiene issues and marks them.
 |------|---------------|
 | `P_NO_NEXT_ACTION` | No remaining task is available for action |
 | `P_HAS_OVERDUE` | Any remaining task is past its due date |
+| `P_OVERDUE` | Project's own due date is past |
+| `P_DEFER_PAST` | Project's own defer date is more than N days in the past |
 | `P_EMPTY` | Project has no remaining tasks |
 
 **Task checks** (when task linting is enabled):
