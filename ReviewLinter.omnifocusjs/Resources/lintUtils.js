@@ -34,7 +34,12 @@
     lib.readPref = function(prefs, key, defaultValue) {
         const fallback = (defaultValue !== undefined) ? defaultValue : lib.DEFAULTS[key];
         const val = prefs.read(key);
-        return (val === null || val === undefined) ? fallback : val;
+        const result = (val === null || val === undefined) ? fallback : val;
+        if (typeof fallback === "number") {
+            const n = Number(result);
+            return (Number.isFinite(n) && n >= 0) ? n : fallback;
+        }
+        return result;
     };
 
     // ─── Date helpers ─────────────────────────────────────────────────────────
@@ -253,7 +258,8 @@
         if (hasOverdue) reasons.push("P_HAS_OVERDUE");
 
         // P_OVERDUE — the project's own due date is past
-        if (project.task.dueDate && project.task.dueDate < now) {
+        const rootDue = project.task.effectiveDueDate || project.task.dueDate;
+        if (rootDue && rootDue < now) {
             reasons.push("P_OVERDUE");
         }
 
@@ -328,6 +334,32 @@
         }
 
         return { reasons, skippedInboxAge };
+    };
+
+    // ─── Date repair helpers ──────────────────────────────────────────────────
+
+    /**
+     * Apply a defer repair policy to any task or project root task.
+     * policy: "today" | "clear"
+     */
+    lib.applyDeferPolicy = function(task, policy) {
+        task.deferDate = policy === "today" ? lib.startOfToday() : null;
+    };
+
+    /**
+     * Apply a due date repair policy to any task or project root task.
+     * policy: "today" | "next_week" | "clear"
+     */
+    lib.applyDuePolicy = function(task, policy) {
+        if (policy === "today") {
+            task.dueDate = lib.startOfToday();
+        } else if (policy === "next_week") {
+            const d = lib.startOfToday();
+            d.setDate(d.getDate() + 7);
+            task.dueDate = d;
+        } else {
+            task.dueDate = null;
+        }
     };
 
     // ─── UI helpers ───────────────────────────────────────────────────────────
