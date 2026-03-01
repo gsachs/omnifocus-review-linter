@@ -76,7 +76,7 @@
             return; // cancelled
         }
 
-        const doAddWaiting   = enableWaiting && toggleResult.values["addWaitingSince"];
+        const doAddWaiting   = enableWaiting && toggleResult.values["addWaitingSince"]; // checkbox fields for waiting are only added when enableWaiting is true; absent field returns undefined — short-circuit prevents undefined-as-truthy
         const doResetWaiting = enableWaiting && toggleResult.values["resetWaitingSince"];
         const doTriage       = toggleResult.values["triageInbox"];
         const doRepairDefer  = toggleResult.values["repairDefer"];
@@ -191,7 +191,9 @@
             }
         }
 
-        // ── Repair project root task dates (excluded from task loop above) ────
+        // ── Repair project root task dates ────────────────────────────────────
+        // resolveTasksForLint excludes project.task (the project root) because it is not a
+        // child task; without this second loop, root-level stale dates would be silently skipped
 
         for (const project of projects) {
             if (doRepairDefer && project.task.deferDate) {

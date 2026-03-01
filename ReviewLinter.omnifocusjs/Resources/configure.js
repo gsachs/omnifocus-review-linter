@@ -35,6 +35,8 @@
         const savedTagId         = lib.readPref(prefs, "scopeTagId");
 
         // ── Pre-enumerate folders and tags for inline pickers ─────────────────
+        // Form.Field.Option requires the values array to be fixed at field-creation time;
+        // there is no way to populate a picker lazily once the form is visible
 
         const allFolders = Array.from(flattenedFolders).filter(
             f => f.status === Folder.Status.Active
@@ -105,6 +107,8 @@
             "triageTagName", "Triage Tag Name", triageTagName, null
         ));
 
+        // OmniFocus calls validate on every field change to gate the submit button in real time;
+        // only format checks belong here — semantic scope validation runs after the form closes
         mainForm.validate = function(f) {
             const tagFields = ["reviewTagName", "waitingTagName", "triageTagName"];
             for (const key of tagFields) {
@@ -131,8 +135,8 @@
         // ── Resolve scope — alert and revert if chosen scope has no targets ───
 
         let newScopeMode     = result.values["scopeMode"];
-        let newScopeFolderId = result.values["scopeFolderId"] || savedFolderId;
-        let newScopeTagId    = result.values["scopeTagId"]    || savedTagId;
+        let newScopeFolderId = result.values["scopeFolderId"] || savedFolderId; // field absent when allFolders was empty; preserve saved ID rather than overwriting with undefined
+        let newScopeTagId    = result.values["scopeTagId"]    || savedTagId;    // same — field absent when allTags was empty
 
         if (newScopeMode === "FOLDER_SCOPE" && allFolders.length === 0) {
             await lib.showAlert(
@@ -170,7 +174,7 @@
         prefs.write("waitingStaleDays",        Number.isNaN(parsedStale) ? 21 : parsedStale);
         prefs.write("enableWaitingSinceStamp", result.values["enableWaitingSinceStamp"]);
         prefs.write("triageTagName",           (result.values["triageTagName"] || "").trim());
-        prefs.write("pluginVersion",           "1.0");
+        prefs.write("pluginVersion",           "1.0"); // persisted so future releases can migrate preference schema without resetting user settings
 
         await lib.showAlert("Preferences Saved", "Review Linter settings updated.");
 

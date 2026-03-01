@@ -83,11 +83,12 @@
 
                 // Add review tag to project's root task
                 const alreadyTagged = project.task.tags.some(t => t.id.primaryKey === reviewTag.id.primaryKey);
-                if (!alreadyTagged) project.task.addTag(reviewTag);
+                if (!alreadyTagged) project.task.addTag(reviewTag); // addTag writes to DB even when redundant, triggering a sync round-trip
 
                 if (alsoFlag) project.flagged = true;
 
-                // Upsert stamps in project note
+                // OmniFocus exposes the review tag on project.task but stamps on project.note —
+                // two distinct objects with separate storage; the tag was written above
                 let note = project.note || "";
                 note = lib.upsertStamp(note, lib.LINT_AT_RE,  "@lintAt(" + today + ")");
                 note = lib.upsertStamp(note, lib.LINT_RE,     "@lint(" + reasons.join(",") + ")");
@@ -100,7 +101,7 @@
                 const tasks = lib.resolveTasksForLint(prefs, projects);
 
                 for (const task of tasks) {
-                    if (lib.shouldExclude(task, excludeTagNames)) continue;
+                    if (lib.shouldExclude(task, excludeTagNames)) continue; // inbox tasks bypass the project-level exclude filter in resolveTasksForLint; check per-task here
 
                     const { reasons, skippedInboxAge } = lib.computeTaskReasons(task, prefs, now);
 

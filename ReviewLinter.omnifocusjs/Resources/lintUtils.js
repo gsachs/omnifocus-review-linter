@@ -37,7 +37,7 @@
         const result = (val === null || val === undefined) ? fallback : val;
         if (typeof fallback === "number") {
             const n = Number(result);
-            return (Number.isFinite(n) && n >= 0) ? n : fallback;
+            return (Number.isFinite(n) && n >= 0) ? n : fallback; // 0 is valid (e.g. deferPastGraceDays:0 means flag immediately); a truthiness check would silently replace it with the default
         }
         return result;
     };
@@ -60,7 +60,7 @@
 
     lib.daysBetween = function(dateA, dateB) {
         const msPerDay = 24 * 60 * 60 * 1000;
-        return Math.floor((dateB.getTime() - dateA.getTime()) / msPerDay);
+        return Math.floor((dateB.getTime() - dateA.getTime()) / msPerDay); // floor not round — "past" requires a full day elapsed, not just half
     };
 
     lib.startOfToday = function() {
@@ -94,7 +94,7 @@
      */
     lib.removeStamp = function(note, regex) {
         let result = note.replace(regex, "");
-        // Collapse 3+ newlines to 2 (one blank line), trim trailing whitespace
+        // removing a stamp line leaves a blank above/below; collapse so notes don't accumulate empty lines
         result = result.replace(/\n{3,}/g, "\n\n");
         result = result.replace(/\n+$/, "");
         return result;
@@ -175,6 +175,8 @@
      * Does NOT apply excludeTagNames (caller filters per task individually).
      */
     lib.resolveTasksForLint = function(prefs, projects) {
+        // Set guards against the same task object appearing in both project.flattenedTasks
+        // and inbox — unusual but possible if OmniFocus collection APIs overlap at boundaries
         const taskSet = new Set();
         const result  = [];
 
@@ -271,6 +273,8 @@
 
         // P_NO_NEXT_ACTION — skip if P_EMPTY (empty projects have no tasks to check)
         if (!reasons.includes("P_EMPTY")) {
+            // probe one task to detect API availability before iterating all; safe here
+            // because P_EMPTY was already excluded, so remainingTasks is non-empty
             const probe = lib.isTaskAvailableIsh(remainingTasks[0]);
             if (probe === undefined) {
                 // taskStatus not available on this build — skip silently

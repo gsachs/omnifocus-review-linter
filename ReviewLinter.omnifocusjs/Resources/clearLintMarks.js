@@ -19,6 +19,7 @@
         // ── Find the review tag ───────────────────────────────────────────────
 
         const tagName   = lib.readPref(prefs, "reviewTagName");
+        // byName not findOrCreateTag — must not create the tag when our only goal is to remove it
         const reviewTag = flattenedTags.byName(tagName);
         if (!reviewTag) {
             await lib.showAlert(
@@ -55,7 +56,7 @@
 
         const clearSelection = formResult.values["scope"] === "selection";
         const removeStamps   = formResult.values["removeStamps"];
-        const removeFlags    = alsoFlag ? formResult.values["removeFlags"] : false;
+        const removeFlags    = alsoFlag ? formResult.values["removeFlags"] : false; // the checkbox is only added to the form when alsoFlag is true; absent field returns undefined
 
         // ── Collect targets ───────────────────────────────────────────────────
 
